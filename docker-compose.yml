@@ -1,27 +1,38 @@
-version: '3.8'
-
 services:
 
-  # ── Your App ──────────────────────────────
-  app:
-    build: .
-    container_name: docker-project-app
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: netwatch-frontend
     ports:
-      - "8080:3000"
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: netwatch-backend
+    ports:
+      - "5000:5000"
     environment:
       - NODE_ENV=production
-      - PORT=3000
-      - DB_HOST=mongo
+      - PORT=5000
+      - MONGO_URL=mongodb://admin:secret123@mongo:27017/moviesdb?authSource=admin
     depends_on:
       - mongo
     networks:
       - app-network
     restart: unless-stopped
 
-  # ── MongoDB ───────────────────────────────
   mongo:
     image: mongo:6-jammy
-    container_name: docker-project-db
+    container_name: netwatch-db
     ports:
       - "27018:27017"
     environment:
@@ -33,10 +44,9 @@ services:
       - app-network
     restart: unless-stopped
 
-  # ── Mongo Express (DB Admin UI) ───────────
   mongo-express:
     image: mongo-express
-    container_name: docker-project-dbui
+    container_name: netwatch-dbui
     ports:
       - "8081:8081"
     environment:
@@ -47,6 +57,7 @@ services:
       - mongo
     networks:
       - app-network
+    restart: unless-stopped
 
 volumes:
   mongo-data:
